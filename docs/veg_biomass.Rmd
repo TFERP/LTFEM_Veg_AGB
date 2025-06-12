@@ -1,0 +1,95 @@
+---
+title: "Aboveground biomass in LTFEM plots"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries
+
+```{r}
+library(tidyverse)
+library(BIOMASS)
+library(ggplot2)
+```
+
+# Load data
+
+```{r}
+load("../data/classified/forLTFEM_Veg_AGB.RData")
+```
+
+Data from WYK plots are from surveys in 2022.
+
+Data from NSSF plots are from surveys in 2020.
+
+Data from NatureParks and Mandai plots are from surveys in 2023.
+
+# Fit Height-DBH models
+
+```{r}
+source("../scripts/fitAlloMods_HeightDBH.R")
+```
+
+```{r cars}
+DBH_minmax <- lapply(treeHeights, function(df) range(df$DBH, na.rm = TRUE))
+
+mods_HD_pred <- lapply(plotSets, function(s) {
+    D <- seq(DBH_minmax[[s]][1],
+             DBH_minmax[[s]][2],
+             length.out = 1000)
+    
+    cbind(D,
+          apply(predict(mods_HD[[s]]$model,
+                        newdata = list(D = D),
+                        interval = "confidence"),
+                2, exp))
+})
+names(mods_HD_pred) <- plotSets
+
+ggplot() +
+    theme_classic() +
+    geom_point(data = treeHeights$WYK,
+               mapping = aes(x = DBH, y = height_avg),
+               color = "darkgreen") +
+    geom_line(data = mods_HD_pred[["WYK"]],
+              mapping = aes(x = D, y = fit),
+              color = "darkgreen") +
+    geom_point(data = treeHeights$NatureParks,
+               mapping = aes(x = DBH, y = height_avg),
+               color = "red") +
+    geom_line(data = mods_HD_pred[["NatureParks"]],
+              mapping = aes(x = D, y = fit),
+              color = "red") +
+    geom_point(data = treeHeights$NSSF,
+               mapping = aes(x = DBH, y = height_avg),
+               color = "blue") +
+    geom_line(data = mods_HD_pred[["NSSF"]],
+              mapping = aes(x = D, y = fit),
+              color = "blue") +
+    scale_y_continuous(trans = "log10") +
+    scale_x_continuous(trans = "log10")
+```
+
+# Calculate aboveground biomass
+
+```{r}
+source("../scripts/veg_biomass.R")
+```
+
+```{r}
+knitr::kable(plots_AGBsum)
+```
+
+Note: there were no big trees in AQ5.
+
+```{r}
+ggplot(data = plots_AGBsum) +
+    geom_point(mapping = aes(y = trees, x = bigTrees, col = plotSet)) +
+    scale_y_continuous(trans = "log10") +
+    scale_x_continuous(trans = "log10") +
+    geom_abline(intercept = 0, slope = 1)
+```
+
