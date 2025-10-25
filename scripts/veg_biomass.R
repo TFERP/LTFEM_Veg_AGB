@@ -1,15 +1,22 @@
-if(!exists("mods_HD")) source("./scripts/fitAlloMods_HeightDBH.R")
+plotSets <- c("WYK", "NatureParks", "NSSF")
+mod_HD <- lapply(plotSets, function(s) {
+    with(treeHeights[[s]],
+         modelHD(D = DBH,
+                 H = height_avg,
+                 method = "log1"))
+})
+names(mod_HD) <- plotSets
 
 ## trees in 20 x 20 m core plot area ----
 
 trees$predHeights <- NA
 for(i in 1:length(plotSets)) {
     trees$predHeights[trees$plotSet == plotSets[i]] <- retrieveH(D = trees$DBH[trees$plotSet == plotSets[i]],
-              model = mods_HD[[plotSets[i]]])$H
+              model = mod_HD[[plotSets[i]]])$H
 }
 
 trees$predHeights[is.na(trees$predHeights)] <- retrieveH(D = trees$DBH[is.na(trees$predHeights)],
-          model = mods_HD[["WYK"]])$H
+          model = mod_HD[["WYK"]])$H
 
 trees$genus <- sapply(trees$species, function(x) {
     strsplit(x, split = " ")[[1]][1]
@@ -34,11 +41,11 @@ treeComm_AGB <- as.data.frame.matrix(xtabs(AGB ~ plotID + species,
 bigTrees$predHeights <- NA
 for(i in 1:length(plotSets)) {
     bigTrees$predHeights[bigTrees$plotSet == plotSets[i]] <- retrieveH(D = bigTrees$DBH[bigTrees$plotSet == plotSets[i]],
-                                                                       model = mods_HD[[plotSets[i]]])$H
+                                                                       model = mod_HD[[plotSets[i]]])$H
 }
 
 bigTrees$predHeights[is.na(bigTrees$predHeights)] <- retrieveH(D = bigTrees$DBH[is.na(bigTrees$predHeights)],
-                                                                   model = mods_HD[["WYK"]])$H
+                                                                   model = mod_HD[["WYK"]])$H
 
 bigTrees$genus <- sapply(bigTrees$species, function(x) {
     strsplit(x, split = " ")[[1]][1]
