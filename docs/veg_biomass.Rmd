@@ -1,23 +1,26 @@
 ---
 title: "Aboveground biomass in LTFEM plots"
-output: html_document
+output:
+    html_document:
+        toc: true
+        toc_float:
+            collapsed: false
+        toc_depth: 3
+        code_folding: hide
+        df_print: kable
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
 
-# Load libraries
-
-```{r}
 library(tidyverse)
 library(BIOMASS)
 library(ggplot2)
 ```
 
-# Load data
+# Data
 
-```{r}
+```{r load data}
 load("../data/classified/forLTFEM_Veg_AGB.RData")
 ```
 
@@ -27,13 +30,40 @@ Data from NSSF plots are from surveys in 2020.
 
 Data from NatureParks and Mandai plots are from surveys in 2023.
 
-# Fit Height-DBH models
+# Height-DBH models {.tabset}
 
-```{r}
-source("../scripts/fitAlloMods_HeightDBH.R")
+## Log-log model
+
+I.e., $\log H = a + b \log D$
+
+or $H = a D^b$
+
+where H is the height of the tree in metres and D is the diameter at the point of measurement in cm.
+
+```{r fit log-log, warning=FALSE}
+plotSets <- c("WYK", "NatureParks", "NSSF")
+
+mods_HD <- lapply(plotSets, function(s) {
+    with(treeHeights[[s]],
+         modelHD(D = DBH,
+                 H = height_avg,
+                 method = "log1"))
+})
+names(mods_HD) <- plotSets
 ```
 
-```{r cars}
+```{r log-log parameters}
+sapply(mods_HD, function(m) {
+    m$coefficients[,1]
+}) %>%
+    t() %>%
+    data.frame() %>%
+    rownames_to_column(var = "Plot set") %>%
+    rename(a = "X.Intercept.",
+           b = "I.log.D..1.")
+```
+
+```{r plot log-log, warning=FALSE}
 DBH_minmax <- lapply(treeHeights, function(df) range(df$DBH, na.rm = TRUE))
 
 mods_HD_pred <- lapply(plotSets, function(s) {
@@ -73,6 +103,64 @@ ggplot() +
     scale_x_continuous(trans = "log10")
 ```
 
+## Weilbull
+
+Not used for calculations here but fitted for information.
+
+$H = \alpha (1 - e^{-(D/\beta)^\gamma})$
+
+where H is the height of the tree in metres and D is the diameter at the point of measurement in cm.
+
+```{r fit weibull, warning=FALSE}
+mods_HD_weibull <- lapply(plotSets, function(s) {
+    with(treeHeights[[s]],
+         modelHD(D = DBH,
+                 H = height_avg,
+                 method = "weibull"))
+})
+names(mods_HD_weibull) <- plotSets
+```
+
+```{r weibull parameters}
+sapply(mods_HD_weibull, function(m) {
+    m$coefficients[,1]
+}) %>%
+    t() %>%
+    data.frame() %>%
+    rownames_to_column(var = "Plot set") %>%
+    rename(`$\\alpha$` = "a",
+           "$\\beta$" = "b",
+           "$\\gamma$" = "c") %>%
+    knitr::kable()
+```
+
+## Michaelis-Menten
+
+Not used for calculations here but fitted for information.
+
+$H = (A \times D)/(B + D)$
+
+where H is the height of the tree in metres and D is the diameter at the point of measurement in cm.
+
+```{r fit M-M, warning=FALSE}
+mods_HD_MM <- lapply(plotSets, function(s) {
+    with(treeHeights[[s]],
+         modelHD(D = DBH,
+                 H = height_avg,
+                 method = "michaelis"))
+})
+names(mods_HD_MM) <- plotSets
+```
+
+```{r M-M parameters}
+sapply(mods_HD_MM, function(m) {
+    m$coefficients[,1]
+}) %>%
+    t() %>%
+    data.frame() %>%
+    rownames_to_column(var = "Plot set")
+```
+
 # Calculate aboveground biomass
 
 ```{r}
@@ -85,11 +173,10 @@ knitr::kable(plots_AGBsum)
 
 Note: there were no big trees in AQ5.
 
-```{r}
+```{r plot tree vs bigtree, warning=FALSE}
 ggplot(data = plots_AGBsum) +
     geom_point(mapping = aes(y = trees, x = bigTrees, col = plotSet)) +
     scale_y_continuous(trans = "log10") +
     scale_x_continuous(trans = "log10") +
     geom_abline(intercept = 0, slope = 1)
 ```
-
