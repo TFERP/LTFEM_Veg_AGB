@@ -1587,7 +1587,7 @@ font-size: 0.95em;
 <h1 class="tabset">Height-DBH models</h1>
 <pre class="r"><code>plotSets &lt;- c(&quot;WYK&quot;, &quot;NatureParks&quot;, &quot;NSSF&quot;)
 mods_HD &lt;- lapply(plotSets, function(s) {
-    list(nls_LL = nls(height_avg ~ exp(a)*DBH^b, data = treeHeights[[s]], start = list(a=1, b = 0.5)),
+    list(nls_LL = nls(height_avg ~ a*DBH^b, data = treeHeights[[s]], start = list(a=exp(1), b = 0.5)),
          nls_WB = nls(height_avg ~ a*(1-exp(-b*DBH^c)), data = treeHeights[[s]], start = list(a=44,b=0.05,c=0.8)),
          nls_MM = nls(height_avg ~ (a*DBH)/(b + DBH), data = treeHeights[[s]], start = list(a=48, b = 38)))
 })
@@ -1733,10 +1733,12 @@ DBH_minmax &lt;- lapply(treeHeights, function(df) range(df$DBH, na.rm = TRUE))</
 </tbody>
 </table>
 </div>
-<div id="log-log-model" class="section level2">
-<h2>Log-log model</h2>
-<p>I.e., <span class="math inline">\(\log H = a + b \log D\)</span></p>
-<p>or <span class="math inline">\(H = a D^b\)</span></p>
+<div id="power-or-log-log-model" class="section level2">
+<h2>Power (or ‘log-log’) model</h2>
+<p><span class="math inline">\(H = a D^b\)</span></p>
+<p>(which can be linearised to <span class="math inline">\(\log H =
+a&#39; + b \log D\)</span> where <span class="math inline">\(a&#39; =
+\log a\)</span>)</p>
 <p>where H is the height of the tree in metres and D is the diameter at
 the point of measurement in cm.</p>
 <pre class="r"><code>sapply(mods_HD, function(m) {
@@ -1757,18 +1759,18 @@ the point of measurement in cm.</p>
 <tbody>
 <tr class="odd">
 <td align="left">WYK</td>
-<td align="right">1.2371323</td>
-<td align="right">0.5243437</td>
+<td align="right">3.445676</td>
+<td align="right">0.5243473</td>
 </tr>
 <tr class="even">
 <td align="left">NatureParks</td>
-<td align="right">0.9016574</td>
-<td align="right">0.5769611</td>
+<td align="right">2.463684</td>
+<td align="right">0.5769609</td>
 </tr>
 <tr class="odd">
 <td align="left">NSSF</td>
-<td align="right">1.2718196</td>
-<td align="right">0.4997325</td>
+<td align="right">3.567342</td>
+<td align="right">0.4997321</td>
 </tr>
 </tbody>
 </table>

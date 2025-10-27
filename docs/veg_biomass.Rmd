@@ -35,7 +35,7 @@ Data from NatureParks and Mandai plots are from surveys in 2023.
 ```{r fit mods}
 plotSets <- c("WYK", "NatureParks", "NSSF")
 mods_HD <- lapply(plotSets, function(s) {
-    list(nls_LL = nls(height_avg ~ exp(a)*DBH^b, data = treeHeights[[s]], start = list(a=1, b = 0.5)),
+    list(nls_LL = nls(height_avg ~ a*DBH^b, data = treeHeights[[s]], start = list(a=exp(1), b = 0.5)),
          nls_WB = nls(height_avg ~ a*(1-exp(-b*DBH^c)), data = treeHeights[[s]], start = list(a=44,b=0.05,c=0.8)),
          nls_MM = nls(height_avg ~ (a*DBH)/(b + DBH), data = treeHeights[[s]], start = list(a=48, b = 38)))
 })
@@ -84,11 +84,11 @@ mods_HD_aictab$NSSF %>%
          w = AICcWt)
 ```
 
-## Log-log model
+## Power (or 'log-log') model
 
-I.e., $\log H = a + b \log D$
+$H = a D^b$
 
-or $H = a D^b$
+(which can be linearised to $\log H = a' + b \log D$ where $a' = \log a$)
 
 where H is the height of the tree in metres and D is the diameter at the point of measurement in cm.
 
