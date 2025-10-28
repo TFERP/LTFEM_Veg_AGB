@@ -8,6 +8,8 @@ output:
         toc_depth: 3
         code_folding: hide
         df_print: kable
+params:
+    
 ---
 
 ```{r setup, include=FALSE}
@@ -257,8 +259,10 @@ ggplot() +
 source("../scripts/veg_biomass.R")
 ```
 
-```{r}
-knitr::kable(plots_AGBsum)
+```{r print AGB table}
+knitr::kable(plots_AGBsum, "html") %>%
+    kableExtra::kable_styling("striped") %>%
+    kableExtra::scroll_box(height = "500px", width = "100%")
 ```
 
 Note: there were no big trees in AQ5.
